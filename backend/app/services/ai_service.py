@@ -8,7 +8,10 @@ from app.models import Issue, PullRequestInfo, ReleaseNotes, TestSuggestion
 
 class AIService:
     def __init__(self) -> None:
-        self.client = OpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else None
+        self.client = OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url or None,
+        ) if settings.openai_api_key else None
 
     async def analyze(self, pr: PullRequestInfo, diff: str) -> dict:
         if not self.client:

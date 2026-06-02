@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from httpx import HTTPStatusError
@@ -71,7 +73,7 @@ def report_detail(report_id: int) -> AnalysisReport:
 
 
 @app.get("/quality-gate/{report_id}")
-def quality_gate(report_id: int) -> dict[str, str | int]:
+def quality_gate(report_id: int) -> Dict[str, Union[str, int]]:
     report = get_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")

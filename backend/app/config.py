@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4.1-mini"
+    openai_base_url: str = ""
     github_token: str = ""
     database_url: str = "sqlite:///./guardian.db"
     allowed_origins: str = "http://localhost:3000"

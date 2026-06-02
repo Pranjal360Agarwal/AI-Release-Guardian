@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.config import settings
@@ -31,7 +33,7 @@ def save_report(report: AnalysisReport) -> AnalysisReport:
     return report
 
 
-def get_report(report_id: int) -> AnalysisReport | None:
+def get_report(report_id: int) -> Optional[AnalysisReport]:
     with Session(engine) as session:
         stored = session.get(StoredReport, report_id)
         if not stored:
