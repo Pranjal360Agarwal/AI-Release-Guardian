@@ -1,6 +1,8 @@
 import { AnalysisReport } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+).replace(/\/+$/, "");
 
 export async function analyzePr(prUrl: string): Promise<AnalysisReport> {
   const response = await fetch(`${API_URL}/analyze-pr`, {
@@ -23,7 +25,9 @@ export async function listReports(): Promise<AnalysisReport[]> {
 }
 
 export async function getReport(id: string): Promise<AnalysisReport> {
-  const response = await fetch(`${API_URL}/reports/${id}`, { cache: "no-store" });
+  const response = await fetch(`${API_URL}/reports/${id}`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error("Report not found");
   }
