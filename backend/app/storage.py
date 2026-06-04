@@ -1,19 +1,38 @@
-from typing import Optional
-
+from sqlalchemy.engine import Engine
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.config import settings
 from app.models import AnalysisReport, StoredReport
 
 
-engine = create_engine(settings.database_url, echo=False)
+engine: Engine | None = None
+db_initialized = False
+
+
+def normalize_database_url(database_url: str) -> str:
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return database_url
+
+
+def get_engine() -> Engine:
+    global engine
+    if engine is None:
+        database_url = normalize_database_url(settings.database_url)
+        connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+        engine = create_engine(database_url, echo=False, connect_args=connect_args)
+    return engine
 
 
 def init_db() -> None:
-    SQLModel.metadata.create_all(engine)
+    global db_initialized
+    if not db_initialized:
+        SQLModel.metadata.create_all(get_engine())
+        db_initialized = True
 
 
 def save_report(report: AnalysisReport) -> AnalysisReport:
+    init_db()
     stored = StoredReport(
         pr_url=report.pr.url,
         owner=report.pr.owner,
@@ -25,7 +44,7 @@ def save_report(report: AnalysisReport) -> AnalysisReport:
         risk_level=report.risk_level,
         report_json=report.model_dump(mode="json"),
     )
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         session.add(stored)
         session.commit()
         session.refresh(stored)
@@ -33,8 +52,9 @@ def save_report(report: AnalysisReport) -> AnalysisReport:
     return report
 
 
-def get_report(report_id: int) -> Optional[AnalysisReport]:
-    with Session(engine) as session:
+def get_report(report_id: int) -> AnalysisReport | None:
+    init_db()
+    with Session(get_engine()) as session:
         stored = session.get(StoredReport, report_id)
         if not stored:
             return None
@@ -44,7 +64,8 @@ def get_report(report_id: int) -> Optional[AnalysisReport]:
 
 
 def list_reports() -> list[AnalysisReport]:
-    with Session(engine) as session:
+    init_db()
+    with Session(get_engine()) as session:
         rows = session.exec(select(StoredReport).order_by(StoredReport.created_at.desc())).all()
         reports: list[AnalysisReport] = []
         for row in rows:

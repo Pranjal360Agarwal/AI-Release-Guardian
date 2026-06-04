@@ -1,5 +1,3 @@
-from typing import Dict, Union
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from httpx import HTTPStatusError
@@ -16,6 +14,7 @@ app = FastAPI(title="AI Release Guardian API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,11 +22,6 @@ app.add_middleware(
 
 github = GitHubService()
 ai = AIService()
-
-
-@app.on_event("startup")
-def startup() -> None:
-    init_db()
 
 
 @app.get("/health")
@@ -73,7 +67,7 @@ def report_detail(report_id: int) -> AnalysisReport:
 
 
 @app.get("/quality-gate/{report_id}")
-def quality_gate(report_id: int) -> Dict[str, Union[str, int]]:
+def quality_gate(report_id: int) -> dict[str, str | int]:
     report = get_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
