@@ -46,7 +46,13 @@ async def analyze_pr(payload: AnalyzeRequest) -> AnalysisReport:
             test_suggestions=tests,
             release_notes=notes,
         )
-        return save_report(report)
+        try:
+            return save_report(report)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database save failed: {type(exc).__name__}",
+            ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except HTTPStatusError as exc:
